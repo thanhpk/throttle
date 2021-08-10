@@ -16,7 +16,7 @@ type Throttler struct {
 func NewThrottler(handler func(string, []interface{}), wait int64) *Throttler {
 	me := &Throttler{
 		Mutex:    &sync.Mutex{},
-		wait:     time.Duration(wait) * time.Millisecond,
+		wait:     time.Duration(wait/2) * time.Millisecond,
 		runningM: make(map[string]bool),
 		cache:    make(map[string][]interface{}),
 		handler:  handler,
@@ -26,10 +26,10 @@ func NewThrottler(handler func(string, []interface{}), wait int64) *Throttler {
 
 func (me *Throttler) Push(key string, i interface{}) {
 	me.Lock()
+	defer me.Unlock()
+
 	me.cache[key] = append(me.cache[key], i)
-	running := me.runningM[key]
-	me.Unlock()
-	if running {
+	if me.runningM[key] {
 		return
 	}
 	go me.run(key)
@@ -43,12 +43,21 @@ func (me *Throttler) run(key string) {
 	}
 	me.runningM[key] = true
 
+	me.Unlock()
+
+	// sleep before, we dont want to call handle immediatly
+	time.Sleep(me.wait)
+
+	me.Lock()
 	payloads := me.cache[key]
 	me.cache[key] = make([]interface{}, 0)
 	me.Unlock()
+
 	if len(payloads) > 0 {
 		me.handler(key, payloads)
 	}
+
+	// sleep after
 	time.Sleep(me.wait)
 
 	me.Lock()
