@@ -51,5 +51,5 @@ func (me *SingleThrottler) Push(key string, i interface{}) {
 
 	me.lastfired = now
 	me.cache = map[string]bool{}
-	me.handler(keys)
+	go me.handler(keys)
 }
