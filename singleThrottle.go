@@ -24,7 +24,7 @@ func NewSingleThrottler(handler func([]string), wait int64) *SingleThrottler {
 	go func() {
 		for {
 			time.Sleep(time.Duration(wait) * time.Millisecond)
-			me.Push(SIGNATURE, nil)
+			me.Push(SIGNATURE)
 		}
 	}()
 	return me
@@ -32,7 +32,7 @@ func NewSingleThrottler(handler func([]string), wait int64) *SingleThrottler {
 
 const SIGNATURE = "LKSJDF$&#$%)($##LKJDFLSKJ#)($!)#*@!)#*LJDSF"
 
-func (me *SingleThrottler) Push(key string, i interface{}) {
+func (me *SingleThrottler) Push(key string) {
 	me.Lock()
 	defer me.Unlock()
 

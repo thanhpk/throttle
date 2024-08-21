@@ -11,15 +11,17 @@ type Throttler struct {
 	cache    map[string][]interface{}
 	runningM map[string]bool
 	handler  func(string, []interface{})
+	leading  bool
 }
 
-func NewThrottler(handler func(string, []interface{}), wait int64) *Throttler {
+func NewThrottler(handler func(string, []interface{}), wait int64, leading bool) *Throttler {
 	me := &Throttler{
 		Mutex:    &sync.Mutex{},
 		wait:     time.Duration(wait/2) * time.Millisecond,
 		runningM: make(map[string]bool),
 		cache:    make(map[string][]interface{}),
 		handler:  handler,
+		leading:  leading,
 	}
 	return me
 }
@@ -45,8 +47,10 @@ func (me *Throttler) run(key string) {
 
 	me.Unlock()
 
-	// sleep before, we dont want to call handle immediatly
-	time.Sleep(me.wait)
+	if !me.leading {
+		// sleep before, we dont want to call handle immediatly
+		time.Sleep(me.wait)
+	}
 
 	me.Lock()
 	payloads := me.cache[key]
