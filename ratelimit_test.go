@@ -9,7 +9,7 @@ import (
 func TestRateLimit(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		time.Sleep(1 * time.Second)
-		failed := RateLimit("thanh", 10, 100)
+		failed := RateLimit("thanh", 10, 100, 0)
 		fmt.Println("FF", failed)
 	}
 }
